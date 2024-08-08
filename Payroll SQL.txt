@@ -1,0 +1,206 @@
+--Performed by: Elyes 
+
+My project revolves around creating a database named 'payroll' and populating it with tables for departments and employees, setting up constraints, inserting data, and performing various SQL queries and operations. The project includes selecting, updating, deleting data, using joins, subqueries, views, stored procedures, and functions. 
+-- Create a database named payroll
+CREATE DATABASE payroll;
+
+-- Use the payroll database
+USE payroll;
+
+-- Create a table named departments with some columns and constraints
+CREATE TABLE departments (
+dept_id INT NOT NULL AUTO_INCREMENT,
+dept_name VARCHAR(50) NOT NULL UNIQUE,
+dept_location VARCHAR(50),
+PRIMARY KEY (dept_id) );
+
+-- Create a table named employees with some columns and constraints
+CREATE TABLE employees (
+emp_id INT NOT NULL AUTO_INCREMENT,
+emp_name VARCHAR(50) NOT NULL,
+emp_email VARCHAR(50) UNIQUE,
+emp_phone VARCHAR(15),
+emp_salary DECIMAL(10,2) NOT NULL DEFAULT 0,
+emp_hire_date DATE NOT NULL,
+emp_dept_id INT,
+PRIMARY KEY (emp_id),
+FOREIGN KEY (emp_dept_id) REFERENCES departments(dept_id)
+);
+
+
+-- Insert some data into the departments table
+INSERT INTO departments (dept_name, dept_location)
+VALUES
+('Sales', 'New York'),
+('Marketing', 'Los Angeles'),
+('Finance', 'Chicago');
+
+-- Insert some data into the employees table
+INSERT INTO employees (emp_name, emp_email, emp_phone, emp_salary, emp_hire_date, emp_dept_id)
+VALUES
+('Alice', 'alice@gmail.com', '123-456-7890', 5000.00, '2021-01-01', 1),
+('Cosmos', 'cosmos@gmail.com', '234-567-8901', 6000.00, '2021-02-01', 2),
+('Joseph', 'joseph@gmail.com', '345-678-9012', 7000.00, '2021-03-01', 3),
+('Chinedu', 'chinedu@gmail.com', NULL, 8000.00, '2021-04-01', NULL),
+('Eve', 'eve@gmail.com', '456-789-0123', 9000.00, '2021-05-01', 1);
+
+
+-- Select all data from the employees table
+SELECT * FROM employees;
+
+-- Select distinct values of emp_salary from the employees table
+SELECT DISTINCT emp_salary FROM employees;
+
+-- Select data from the employees table where emp_salary is greater than 7000
+SELECT * FROM employees WHERE emp_salary > 7000;
+
+-- Select data from the employees table ordered by emp_hire_date in descending order
+SELECT * FROM employees ORDER BY emp_hire_date DESC;
+-- Set sql_safe_updates to 0
+SET SQL_SAFE_UPDATES = 0;
+-- Update the emp_salary of Cosmos to 6500
+UPDATE employees SET emp_salary = 6500 WHERE emp_name = 'Cosmos';
+
+-- Delete the record of Chinedu from the employees table
+DELETE FROM employees WHERE emp_name = 'Chinedu';
+
+-- Alter the table employees to add a column named emp_bonus with a default value of 500
+ALTER TABLE employees ADD COLUMN emp_bonus DECIMAL(10,2) DEFAULT 500;
+
+-- Select data from the employees table grouped by emp_dept_id and calculate the average salary for each department
+SELECT emp_dept_id, AVG(emp_salary) AS avg_salary FROM employees GROUP BY emp_dept_id;
+
+-- Select data from the employees table where emp_dept_id is either 1 or 3 and emp_salary is not null
+SELECT * FROM employees WHERE (emp_dept_id = 1 OR emp_dept_id = 3) AND emp_salary IS NOT NULL;
+
+-- Select data from the employees table where emp_name starts with A or E and ends with E
+SELECT * FROM employees WHERE (emp_name LIKE 'A%E' OR emp_name LIKE 'E%E');
+-- Select data from the employees table having an average salary greater than 6000 grouped by emp_dept_id with rollup
+SELECT emp_dept_id, AVG(emp_salary) AS avg_salary FROM employees GROUP BY emp_dept_id WITH ROLLUP HAVING avg_salary > 6000;
+
+-- Select data from the employees table with a limit of 3 records
+SELECT * FROM employees LIMIT 3;
+
+-- Alter the table employees to modify the column emp_email to have a length of 100
+ALTER TABLE employees MODIFY COLUMN emp_email VARCHAR(100);
+
+-- Join the tables employees and departments on the foreign key column and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e JOIN departments d ON e.emp_dept_id = d.dept_id;
+
+-- Perform an inner join on the tables employees and departments and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e INNER JOIN departments d ON e.emp_dept_id = d.dept_id;
+
+-- Perform a left join on the tables employees and departments and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e LEFT JOIN departments d ON e.emp_dept_id = d.dept_id;
+-- Perform a right join on the tables employees and departments and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e RIGHT JOIN departments d ON e.emp_dept_id = d.dept_id;
+
+
+ -- Perform a full join on the tables employees and departments and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e FULL JOIN departments d ON e.emp_dept_id = d.dept_id;
+
+-- Perform a cross join on the tables employees and departments and select some columns from both tables
+SELECT e.emp_name, e.emp_email, e.emp_salary, d.dept_name, d.dept_location FROM employees e CROSS JOIN departments d;
+
+-- Use aliases for the tables employees and departments and select some columns from both tables
+SELECT emp.emp_name AS name, emp.emp_email AS email, dept.dept_name AS department FROM employees AS emp, departments AS dept WHERE emp.emp_dept_id = dept.dept_id;
+
+-- Use union to combine the results of two queries that select some columns from the employees table
+SELECT emp_name AS name, emp_salary AS salary FROM employees WHERE emp_salary > 7000
+UNION
+SELECT emp_name AS name, emp_bonus AS salary FROM employees WHERE emp_bonus > 0;
+
+
+
+
+
+
+-- Create a string procedure that concatenates the emp_name and emp_email columns with a space in between
+DELIMITER //
+
+CREATE PROCEDURE concat_emp_name_email()
+BEGIN
+    SELECT CONCAT(emp_name,' ',emp_email) AS concat_name_email FROM employees;
+END //
+
+DELIMITER ;
+-- Use the string procedure to display the concatenated values for each employee
+CALL concat_emp_name_email();
+
+-- Create a numeric procedure that calculates the annual salary of an employee based on the emp_salary and emp_bonus columns
+DELIMITER //
+CREATE PROCEDURE calculate_annual_salary()
+BEGIN
+    SELECT CONCAT(emp_name,' - ',dept_name,' - Annual Salary: ',(emp_salary + IFNULL(emp_bonus,0)) * 12) AS full_info FROM employees JOIN departments ON employees.emp_dept_id = departments.dept_id;
+END //
+DELIMITER ;
+-- Use the numeric procedure to display the annual salary for each employee
+
+CALL calculate_annual_salary();
+
+
+
+
+
+-- Create a date and time procedure that returns the number of days since an employee was hired based on the emp_hire_date column
+DELIMITER //
+CREATE PROCEDURE calculate_days_since_hired()
+BEGIN
+    SELECT CONCAT(emp_name,' - Days since hired: ',DATEDIFF(CURDATE(), emp_hire_date)) AS full_info FROM employees;
+END //
+DELIMITER ;
+-- Use the date and time procedure to display the number of days since hired for each employee
+CALL calculate_days_since_hired();
+
+-- Create a conditional statement that returns 'High' if an employee's salary is greater than 7000, 'Medium' if it is between 5000 and 7000, and 'Low' otherwise
+CREATE FUNCTION salary_level(emp_id INT) RETURNS VARCHAR(10)
+BEGIN
+  DECLARE level VARCHAR(10);
+  SELECT CASE 
+    WHEN emp_salary > 7000 THEN 'High'
+    WHEN emp_salary BETWEEN 5000 AND 7000 THEN 'Medium'
+    ELSE 'Low'
+    END INTO level FROM employees WHERE emp_id = emp_id;
+  RETURN level;
+END;
+
+-- Use the conditional statement to display the salary level for each employee
+SELECT emp_id, salary_level(emp_id) AS level FROM employees;
+
+-- Create a subquery in the select clause that returns the highest salary in the employees table
+SELECT (SELECT MAX(emp_salary) FROM employees) AS max_salary;
+
+-- Create a subquery in the from clause that returns the average salary for each department
+SELECT dept_name, avg_salary FROM (SELECT dept_name, AVG(emp_salary) AS avg_salary FROM employees e JOIN departments d ON e.emp_dept_id = d.dept_id GROUP BY dept_name) AS sub;
+
+-- Create a subquery in the where clause that returns the employees who have a salary higher than the average salary of their department
+SELECT emp_name, emp_salary FROM employees WHERE emp_salary > (SELECT AVG(emp_salary) FROM employees e WHERE e.emp_dept_id = employees.emp_dept_id);
+
+
+-- Create a correlated subquery that returns the employees who have the highest salary in their department
+SELECT emp_name, emp_salary FROM employees e1 WHERE emp_salary = (SELECT MAX(emp_salary) FROM employees e2 WHERE e1.emp_dept_id = e2.emp_dept_id);
+
+
+-- Create a view named high_earners that contains the emp_name and emp_salary columns of the employees who have a salary higher than 7000
+CREATE VIEW high_earners AS SELECT emp_name, emp_salary FROM employees WHERE emp_salary > 7000;
+
+
+-- Select data from the view high_earners
+SELECT * FROM high_earners;
+
+-- Create a stored procedure named raise_bonus that increases the emp_bonus column by a given percentage for a given department
+DELIMITER //
+
+CREATE PROCEDURE raise_bonus(IN dept_id INT, IN percentage DECIMAL(5,2))
+BEGIN
+    UPDATE employees SET emp_bonus = emp_bonus + (emp_bonus * percentage / 100) WHERE emp_dept_id = dept_id;
+END //
+DELIMITER ;
+-- Call the stored procedure raise_bonus to increase the bonus by 10% for department 1
+CALL raise_bonus(1, 10);
+-- Call the stored procedure raise_bonus to increase the bonus by 18% for department 3
+CALL raise_bonus(3, 18);
+-- Select data from the employees table to see the updated bonus
+SELECT * FROM employees;
+
+

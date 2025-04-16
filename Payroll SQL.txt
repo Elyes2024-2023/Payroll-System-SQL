@@ -309,8 +309,6 @@ SELECT * FROM executive_personnel;
 * 
 * For technical support or inquiries:
 * Author: ELYES
-* Email: [Your Email]
-* 
 * © 2024-2025 ELYES. All rights reserved.
 * =====================================================
 */
